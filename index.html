@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <title>DP Maker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      background: #0f5f4e;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      color: #fff;
+    }
+    h2 {
+      margin: 20px 0 10px;
+    }
+    input, button {
+      padding: 10px 16px;
+      margin: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+    }
+    button {
+      background: #ffffff;
+      color: #0f5f4e;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    canvas {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 14px;
+    }
+    footer {
+      margin: 20px 0;
+      font-size: 14px;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>আপনার ছবি আপলোড করুন</h2>
+
+  <input type="file" id="upload" accept="image/*">
+  <br>
+
+  <canvas id="canvas" width="1080" height="1080"></canvas>
+  <br>
+
+  <button onclick="downloadDP()">ডাউনলোড করুন</button>
+
+  <footer>
+    Digital Campaign Tool
+  </footer>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const frame = new Image();
+  frame.src = "frame.png";
+
+  document.getElementById("upload").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    img.onload = () => draw(img);
+    img.src = URL.createObjectURL(file);
+  });
+
+  function draw(img) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // ==== Portrait mask (BOTTOM CENTER) ====
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(540, 760, 230, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+
+    ctx.drawImage(img, 310, 520, 460, 460);
+    ctx.restore();
+
+    // ==== Frame on top ====
+    ctx.drawImage(frame, 0, 0, 1080, 1080);
+  }
+
+  function downloadDP() {
+    const link = document.createElement("a");
+    link.download = "dp.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }
+</script>
+
+</body>
+</html>
