@@ -2,112 +2,124 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<title>Advanced DP Maker</title>
+<title>DP Maker</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{
   margin:0;
-  background:#0f5f4e;
+  background:#111;
   color:#fff;
-  font-family:Arial;
+  font-family:Arial, sans-serif;
   text-align:center;
 }
 canvas{
-  width:100%;
-  max-width:420px;
-  border-radius:14px;
+  background:#000;
+  max-width:100%;
 }
-button,input{
+.controls button{
+  margin:4px;
   padding:10px 14px;
-  margin:5px;
-  border:none;
-  border-radius:6px;
   font-size:14px;
-}
-button{
-  background:#fff;
-  color:#0f5f4e;
-  font-weight:bold;
-  cursor:pointer;
-}
-.controls{
-  margin-top:10px;
 }
 </style>
 </head>
-
 <body>
 
-<h3>ছবি ঠিকমতো বসান</h3>
+<h3>No Boat No Vote – DP Maker</h3>
 
-<input type="file" id="upload" accept="image/*"><br>
+<input type="file" id="upload" accept="image/*"><br><br>
 
 <canvas id="canvas" width="1080" height="1080"></canvas>
 
 <div class="controls">
-  <button onclick="zoomIn()">Zoom +</button>
-  <button onclick="zoomOut()">Zoom -</button><br>
-  <button onclick="moveUp()">⬆</button>
-  <button onclick="moveDown()">⬇</button>
-  <button onclick="moveLeft()">⬅</button>
-  <button onclick="moveRight()">➡</button>
+  <button onclick="move(0,-20)">⬆</button>
+  <button onclick="move(-20,0)">⬅</button>
+  <button onclick="move(20,0)">➡</button>
+  <button onclick="move(0,20)">⬇</button><br>
+  <button onclick="zoom(1.1)">Zoom +</button>
+  <button onclick="zoom(0.9)">Zoom −</button><br>
+  <button onclick="downloadDP()">Download</button>
 </div>
-
-<br>
-<button onclick="downloadDP()">Download</button>
 
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-const frame = new Image();
-frame.src = "frame.png";
+let userImg = new Image();
+let frameImg = new Image();
 
-let userImg = null;
 let scale = 1;
-let posX = 540;
-let posY = 540;
+let posX = 0;
+let posY = 0;
 
-document.getElementById("upload").addEventListener("change", e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  userImg = new Image();
-  userImg.onload = draw;
-  userImg.src = URL.createObjectURL(file);
-});
+frameImg.src = "frame.png";
 
 function draw(){
-  ctx.clearRect(0,0,1080,1080);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  if(userImg){
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(540,540,460,0,Math.PI*2);
-    ctx.clip();
-
-const w = 920 * scale;
-const h = 920 * scale;
-
-ctx.drawImage(userImg, posX - w/2, posY - h/2, w, h);
-    ctx.restore();
+  if(userImg.src){
+    const w = userImg.width * scale;
+    const h = userImg.height * scale;
+    ctx.drawImage(
+      userImg,
+      canvas.width/2 - w/2 + posX,
+      canvas.height/2 - h/2 + posY,
+      w,h
+    );
   }
 
-  ctx.drawImage(frame,0,0,1080,1080);
+  // mask circle
+  ctx.globalCompositeOperation="destination-in";
+  ctx.beginPath();
+  ctx.arc(canvas.width/2, canvas.height/2, 360, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalCompositeOperation="destination-over";
+
+  if(frameImg.complete){
+    ctx.drawImage(frameImg,0,0,canvas.width,canvas.height);
+  }
 }
 
-// Controls
+upload.onchange = e =>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    userImg = new Image();
+    userImg.onload = ()=>{
+      scale = 1;
+      posX = 0;
+      posY = 0;
+      draw();
+    };
+    userImg.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+function zoom(f){
+  scale *= f;
+  draw();
+}
+
+function move(x,y){
+  posX += x;
+  posY += y;
+  draw();
+}
+
 function downloadDP(){
-  canvas.toBlob(function(blob){
-    const url = URL.createObjectURL(blob);
+  canvas.toBlob(blob=>{
     const a = document.createElement("a");
-    a.href = url;
+    a.href = URL.createObjectURL(blob);
     a.download = "dp.png";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   });
 }
+
+frameImg.onload = draw;
 </script>
 
 </body>
